@@ -1,113 +1,275 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from "react";
+
+const Home = () => {
+  const [data, setData] = useState(null);
+  const [mapv, setMapv] = useState("");
+  const [regionv, setRegionv] = useState("");
+  const [densityv, setDensityv] = useState("");
+  const [namev, setNamev] = useState("");
+
+  const fetchData = async (queryParams) => {
+    try {
+      console.log("first try");
+      // Define the base URL
+      const baseURL = "http://127.0.0.1:8000/api/servers/";
+
+      // Initialize an empty array to store URL parameters
+      const queryParams = [];
+
+      // Check if mapv is provided
+      if (mapv) {
+        queryParams.push(`map=${mapv}`);
+      }
+
+      // Check if regionv is provided
+      if (regionv) {
+        queryParams.push(`region=${regionv}`);
+      }
+
+      // Check if densityv is provided
+      if (densityv) {
+        queryParams.push(`density=${densityv}`);
+      }
+
+      // Check if namev is provided
+      if (namev) {
+        queryParams.push(`name=${encodeURIComponent(namev)}`);
+      }
+
+      // Construct the complete URL
+      const url = new URL(
+        baseURL + (queryParams.length > 0 ? "?" + queryParams.join("&") : "")
+      );
+      if (queryParams) {
+        Object.keys(queryParams).forEach((key) =>
+          url.searchParams.append(key, queryParams[key])
+        );
+      }
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const jsonData = await response.json();
+      setData(jsonData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData(); // Fetch all servers initially
+  }, [mapv, densityv, regionv]);
+
+  // Function to handle search input change
+  const handleSearchInputChange = (e) => {
+    setNamev(e.target.value); // Update the search input state
+  };
+
+  // Function to handle form submission for search
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    const searchParams = { name: namev }; // Search by name
+    fetchData(searchParams); // Fetch data based on search criteria
+  };
+
+  const handleSelectChange = (boxIndex, e) => {
+    console.log("🚀 ~ handleSelectChange ~ boxIndex:", boxIndex);
+    const { value } = e.target;
+    console.log("🚀 ~ handleSelectChange ~ value:", value);
+    if (boxIndex === 0) {
+      setRegionv(value);
+    } else if (boxIndex === 1) {
+      setDensityv(value);
+    } else if (boxIndex === 2) {
+      setMapv(value);
+    }
+    // setSelectedOptions((prevState) => ({
+    //   ...prevState,
+    //   [boxIndex]: value,
+    // }));
+    // Fetch data based on selected options
+    //fetchData();
+  };
+
+  const buttons = [
+    { label: "Button 1" },
+    { label: "Button 2" },
+    // Add more buttons as needed
+  ];
+
+  const boxes = [
+    {
+      region: "Region",
+      options: [
+        { label: "All", value: "" },
+        { label: "🇪🇺 Europe", value: "EU" },
+        { label: "🇺🇸  America", value: "US" },
+
+      ],
+    },
+    {
+      region: "Density",
+      options: [
+        { label: "All", value: "" },
+        { label: "Heavy", value: "Heavy Traffic" },
+        { label: "Light", value: "Light Traffic" },
+        { label: "None", value: "None" },
+      ],
+    },
+    {
+      region: "Map",
+      options: [
+        { label: "All", value: "" },
+        { label: "FDR", value: "FDR" },
+        { label: "SRP", value: "SRP" },
+        { label: "Akina", value: "Akina" },
+        { label: "Horizon", value: "Horizon" },
+        { label: "415", value: "415" },
+        { label: "Fruitlines", value: "Fruitlines" },
+        { label: "California", value: "California" },
+        { label: "Nordschleife", value: "Nordschleife" },
+      ],
+    },
+  ];
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="w-full my-10 gap-5 flex flex-col container-section">
+      <div className="flex  items-center justify-center gap-5">
+        {boxes.map((box, index) => (
+          <form key={index} className="">
+            <div className="bg-blur flex border border-content-primary/10 text-sm rounded-sm focus:ring-blue-500 focus:border-blue-500 w-full p-2.5">
+              <p>{box.region}:</p>
+              <select
+                id={`countries-${index}`}
+                className="bg-transparent border-none focus:border-none"
+                value={""}
+                onChange={(e) => handleSelectChange(index, e)}
+              >
+                {box.options.map((option, optionIndex) => (
+                  <option key={optionIndex} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </form>
+        ))}
+      </div>
+
+      <form class="max-w-lg mx-auto" onSubmit={handleSearchSubmit}>
+        <label
+          for="default-search"
+          class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white"
+        >
+          Search
+        </label>
+        <div class="relative">
+          <input
+            type="search"
+            id="default-search"
+            class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            placeholder="Search by name..."
+            required
+            value={namev}
+            onChange={handleSearchInputChange}
+          />
+          <button
+            type="submit"
+            class="text-white absolute end-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
           >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+            Search
+          </button>
+        </div>
+      </form>
+      <div className="hidden xl:grid grid-cols-12 gap-x-3 text-base text-content-secondary font-inter w-full">
+        <p className="col-span-3">Name</p>
+        <p className="col-span-2 text-center">Traffic Density</p>
+        <p className="col-span-2">Map</p>
+        <p className="text-center">Region</p>
+        <div className="flex justify-end items-start gap-2">
+          <svg className="progress-ring" width="30" height="30">
+            {/* SVG content */}
+          </svg>
+          <div className="relative flex-wrap group pt-[2px]">
+            <div className="absolute p-3 hidden group-hover:inline-block -top-14 right-0 gap-3 bg-top-dark-83 rounded-md border border-border backdrop-blur-16 whitespace-nowrap">
+              Servers updating after one minute.
+            </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#ffffff"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="opacity-70"
+            >
+              {/* SVG content */}
+            </svg>
+          </div>
         </div>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-1 gap-6">
+        {data?.servers?.map((row, index) => (
+          <div
+            key={index}
+            className="hidden xl:grid grid-cols-12 gap-x-3 text-base text-content-secondary font-inter w-full rounded-lg p-4 pl-6 bg-top-light-2 border-l-8 border-top-light-10 hover:bg-top-light-10 translate-x-0 hover:translate-x-8 duration-1000"
+          >
+            <h6 className="col-span-3 h6-inter line-clamp-1 text-ellipsis text-content-primary">
+              {row.name}
+            </h6>
+            <p className="translate-x-0 transition duration-1000 col-span-2 text-center">
+              {row.density}
+            </p>
+            <p className="col-span-2 flex gap-2 items-center translate-x-0 transition duration-1000">
+              {row.map}
+            </p>
+            <p className="flex items-center justify-center translate-x-0 transition duration-1000">
+              {row.region}
+            </p>
+            <div className="justify-self-end self-center flex gap-2 items-center h-[120%]">
+              <div className="relative h-full flex items-center">
+                <button className="hidden hover:bg-top-light-10 rounded-sm p-1">
+                  <img
+                    src=""
+                    alt=""
+                    className="opacity-30 hover:opacity-60 h-5 w-5"
+                  />
+                </button>
+              </div>
+              <div className="relative h-full flex items-center">
+                <button className="hidden hover:bg-top-light-10 rounded-sm p-1">
+                  <img
+                    src=""
+                    alt=""
+                    className="opacity-30 hover:opacity-60 h-5 w-5"
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800 hover:dark:bg-opacity-30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+      <div className="flex justify-center items-center gap-2">
+        {buttons.map((button, index) => (
+          <button
+            key={index}
+            className="rounded-md flex items-center justify-center p-2 px-3 w-10 h-10 sm:w-14 sm:h-14 sm:p-4 sm:px-5 text-md slnt-10 font-bold font-roboto bg-background text-content-primary border border-content-tertiary disabled:bg-top-light-10 disabled:border-0 hover:bg-top-light-10 transition-all duration-500"
+          >
+            {index === 0 || index === buttons.length - 1 ? (
+              <img src="" alt="" />
+            ) : (
+              button.label
+            )}
+          </button>
+        ))}
       </div>
-    </main>
+    </div>
   );
-}
+};
+
+export default Home;
